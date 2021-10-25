@@ -34,13 +34,16 @@ class FlippingLabel: UILabel {
     /// added as subviews.
     /// - Parameter newText: the new text to be shown for the label
     func updateWithText(_ newText: String) {
+        // 애니메이션 작동시, 기존 애니메이션 중지
+        stopAnimations()
         
-        if text != newText {
-            
-            let (previousTextTopView, previousTextBottomView): (UIView, UIView) = createSnapshotViews()
+        // 생성된 context가 nil이면 애니메이션을 만들지 않음
+        if text != newText, createSnapshotViews() != nil {
+            // if문에서 체크했기 때문에 강제 언래핑을 함
+            let (previousTextTopView, previousTextBottomView): (UIView, UIView) = createSnapshotViews()!
             
             text = newText
-            let (_, newTextBottomView): (UIView, UIView) = createSnapshotViews()
+            let (_, newTextBottomView): (UIView, UIView) = createSnapshotViews()!
             
             
             self.newTextBottomView = newTextBottomView
@@ -55,8 +58,9 @@ class FlippingLabel: UILabel {
             // shadown that we will draw, inside the bounds of the view
             previousTextBottomView.clipsToBounds = true;
             
-            
-            clipsToBounds = false;
+            // 새로 생성된 FlippingLabel의 테두리 변화를 유지
+//            clipsToBounds = false
+            clipsToBounds = true
             
             animateTiles()
         }
@@ -69,10 +73,12 @@ class FlippingLabel: UILabel {
     /// for the bottom part
     ///
     /// - Returns: the top part snapshot and the bottom part snapshot
-    fileprivate func createSnapshotViews()->(top:UIView, bottom:UIView) {
+    fileprivate func createSnapshotViews()->(top:UIView, bottom:UIView)? {
         
         // Render the view into an image:
         UIGraphicsBeginImageContextWithOptions(self.bounds.size, false, 0)
+        // 설정된 크기가 없어서 nil이라면 Label을 생성하지 않고 끝냄
+        guard UIGraphicsGetCurrentContext() != nil else { return nil }
         layer.render(in: UIGraphicsGetCurrentContext()!)
         let renderedImage: UIImage  = UIGraphicsGetImageFromCurrentImageContext()!
         
